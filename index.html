@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ДЕЛО №1604: ИСЧЕЗНОВЕНИЕ ЛИДЫ</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #0b0b0b;
+            color: #d4d4d4;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+   
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        
+        .top-bar {
+            position: relative;
+            z-index: 3;
+            background: rgba(15, 15, 15, 0.9);
+            border-bottom: 1px solid #333;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: flex-end;
+            backdrop-filter: blur(5px);
+        }
+
+        .secret-btn {
+            display: inline-block;
+            background: #2a0808;            color: #ff4a4a;
+            border: 1px solid #ff4a4a;
+            padding: 10px 20px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(255, 74, 74, 0.2);
+            user-select: none;
+        }
+
+        .secret-btn:hover {
+            background: #ff4a4a;
+            color: #0b0b0b;
+            box-shadow: 0 0 20px rgba(255, 74, 74, 0.6);
+        }
+
+      
+        #modal-toggle {
+            display: none;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10;
+            display: none; 
+            align-items: center;
+            justify-content: center;
+        }
+
+        #modal-toggle:checked ~ .modal-overlay {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #121212;
+            border: 2px solid #ff4a4a;
+            padding: 30px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(255, 74, 74, 0.3);
+            margin: auto;
+            position: relative;
+        }
+
+        .modal-content h2 {
+            color: #fff;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        .modal-content p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            color: #b0b0b0;
+        }
+
+        .price-tag {
+            font-size: 1.5rem;
+            color: #ff4a4a;
+            font-weight: bold;
+            margin-bottom: 25px;
+            display: block;
+        }
+
+        .buy-btn {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .buy-btn:hover {
+            background: #d4d4d4;
+        }
+
+        .close-btn {
+            display: inline-block;
+            background: transparent;
+            color: #555;
+            border: none;
+            font-family: inherit;
+            cursor: pointer;
+            font-size: 0.8rem;
+            text-decoration: underline;
+            user-select: none;
+        }
+
+        .close-btn:hover {
+            color: #888;
+        }
+
+   
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+
+        header {
+            border-bottom: 2px dashed #444;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            letter-spacing: 4px;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            margin-bottom: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            background: #2a0808;
+            color: #ff4a4a;
+            padding: 5px 15px;
+            font-weight: bold;
+            border: 1px solid #ff4a4a;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .dossier-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        @media (min-width: 600px) {
+            .dossier-grid {
+                grid-template-columns: 200px 1fr;
+            }
+        }
+
+        .photo-placeholder {
+            width: 100%;
+            height: 250px;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        .photo-placeholder::before {
+            content: "ФОТО ИЗЪЯТО";
+            color: #555;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            transform: rotate(-15deg);
+            border: 1px dashed #555;
+            padding: 5px 10px;
+        }
+
+        .info-block {
+            background: rgba(20, 20, 20, 0.8);
+            border: 1px solid #333;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .info-line {
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .info-line strong {
+            color: #888;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            display: inline-block;
+            width: 120px;
+        }
+
+        .evidence {
+            background: rgba(15, 15, 15, 0.9);
+            border-left: 3px solid #666;
+            padding: 20px;
+            margin-bottom: 40px;
+        }
+
+        .evidence h3 {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .log-entry {
+            border-bottom: 1px solid #222;
+            padding: 15px 0;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .date {
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        .intercept {
+            background: #111;
+            padding: 10px;
+            border: 1px solid #222;
+            color: #a5c2a5;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #444;
+            margin-top: 60px;
+            border-top: 1px solid #222;
+            padding-top: 20px;
+        }
+
+        .terminal-input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #444;
+            color: #fff;
+            font-family: inherit;
+            padding: 5px;
+            width: 100%;
+            max-width: 300px;
+            margin-top: 10px;
+        }
+
+        .terminal-input:focus {
+            outline: none;
+            border-bottom-color: #ff4a4a;
+        }
+    </style>
+</head>
+<body>
+
+
+    <canvas id="cipherCanvas"></canvas>
+
+
+    <input type="checkbox" id="modal-toggle">
+
+
+    <div class="top-bar">
+
+        <label for="modal-toggle" class="secret-btn">🔑 ВСЕ СЕКРЕТНЫЕ ФАЙЛЫ</label>
+    </div>
+
+
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <h2>ДОСТУП ОГРАНИЧЕН</h2>
+            <p>Полные архивы геолокации, скрытые записи с камер китайских сборочных цехов и расшифрованные аудиозаписи 16-летней Лиды доступны только для сертифицированных агентов сети.</p>
+            <span class="price-tag">Оформить подписку: 499₽ / мес</span>
+            <button class="buy-btn">Получить доступ</button>
+            <br>
+        
+            <label for="modal-toggle" class="close-btn">Вернуться к доступным материалам</label>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>АРХИВ: ДЕЛО №1604</h1>
+            <div class="status">Расследование продолжается</div>
+            
+        </header>
+многие не знали правду, но на самом деле 16-17 летняя ученица 4-ого МБОУ Лицея
+Лидия сотрудничает с Картелем, на это есть множество неопровержимых доказательств:
+        <main><main>
+    <div class="dossier-grid">
+        
+        <div class="photo-placeholder"></div>
+        
+        
+        <div class="info-block">
+            <div class="info-line"><strong>Фигурант:</strong>Лидия</div>
+            <div class="info-line"><strong>Статус:</strong>Ученица 4-го МБОУ Лицея</div>
+            <div class="info-line"><strong>Возраст:</strong>16-17 лет</div>
+            <div class="info-line"><strong>Обвинение:</strong>Сотрудничество с международным Картелем</div>
+            <div class="info-line"><strong>Уровень угрозы:</strong>Критический</div>
+        </div>
+    </div>
+
+   
+    <div class="evidence">
+        <h3>Сводка неопровержимых доказательств</h3>
+        
+        <div class="log-entry">
+            <div class="date">УЛИКА №1 перехват трафика</div>
+            <p>подозрительная сетевая активность с IP-адресов Лицея, которые связаны с логистическими узлами Картеля</p>
+            
+        </div>
+
+        <div class="log-entry">
+            <div class="date">УЛИКА №2 транзакции</div>
+            <p>На банковские карту поступали регулярные анонимные платежи в биткоинах, которые обналичивались в радиусе 500 метров от школы</p>
+        </div>
+
+        <div class="log-entry">
+            <div class="date">УЛИКА №3 ее страничка в ВК</div>
+            <p>видно кое что страшное, доказательства приложены снизу:</p>
+             <img src="https://userapi.com" 
+        </div>
+       
+    </div>
+</main>
+
